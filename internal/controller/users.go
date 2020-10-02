@@ -31,7 +31,6 @@ func NewUserController(userStorage db.Storage, config *configs.Config) UserContr
 func (c *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Create User"))
-	//storage := c.userStorage.(*db.UserStorage)
 }
 
 func (t *userController) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -40,8 +39,8 @@ func (t *userController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *userController) Login(w http.ResponseWriter, r *http.Request) {
-
-	//err := json.NewDecoder(r.Body).Decode(&p)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Login User"))
 }
 
 func (c *userController) Register(w http.ResponseWriter, r *http.Request) {

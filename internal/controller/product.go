@@ -12,7 +12,7 @@ type ProductsController interface {
 
 type productsController struct {
 	productsStorage db.Storage
-	config *configs.Config
+	config          *configs.Config
 }
 
 func NewProductsController(productsStorage db.Storage, config *configs.Config) ProductsController {
@@ -22,6 +22,4 @@ func NewProductsController(productsStorage db.Storage, config *configs.Config) P
 func (c *productsController) GetProducts(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Get products"))
-
-	//storage := c.productsStorage.(*db.ProductStorage)
 }

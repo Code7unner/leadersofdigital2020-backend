@@ -18,5 +18,11 @@ func InitRoutes(storage db.Storage, config *configs.Config) func(r chi.Router) {
 
 		// Product requests
 		r.HandleFunc("/products/get", c.Products.GetProducts)
+
+		// Order requests
+		r.HandleFunc("/order/create", c.Order.Create)
+
+		// Store requests
+		r.HandleFunc("/store/create", c.Store.Create)
 	}
 }
