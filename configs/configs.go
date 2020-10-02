@@ -11,6 +11,11 @@ type Config struct {
 	ServerExternalPort string `json:"SERVER_EXTERNAL_PORT" env:"SERVER_EXTERNAL_PORT"`
 	// Postgres configs
 	PostgresDBStr string `json:"POSTGRESS_DB_STR" env:"POSTGRESS_DB_STR"`
+	// Nexmo configs (mobile notification service)
+	NexmoApiKey    string `json:"NEXMO_API_KEY"`
+	NexmoApiSecret string `json:"NEXMO_API_SECRET"`
+	// Secret token
+	TokenSecret string `json:"TOKEN_SECRET"`
 }
 
 func NewConfig() *Config {
@@ -19,6 +24,9 @@ func NewConfig() *Config {
 		HostName:           getEnv("SERVER_TOKEN", ""),
 		ServerExternalPort: getEnv("SERVER_EXTERNAL_PORT", ""),
 		PostgresDBStr:      getEnv("POSTGRESS_DB_STR", ""),
+		NexmoApiKey:        getEnv("NEXMO_API_KEY", ""),
+		NexmoApiSecret:     getEnv("NEXMO_API_SECRET", ""),
+		TokenSecret:        getEnv("TOKEN_SECRET", ""),
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/code7unner/leadersofdigital2020-backend/configs"
+	"github.com/code7unner/leadersofdigital2020-backend/internal/auth"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/db"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/interrupt"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/logging"
@@ -38,8 +39,8 @@ func main() {
 	}
 }
 
-func runExternalServer(ctx context.Context, conf *configs.Config, logger *zap.SugaredLogger) error {
-	conn, err := newDB(conf.PostgresDBStr)
+func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.SugaredLogger) error {
+	conn, err := newDB(config.PostgresDBStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,14 +50,15 @@ func runExternalServer(ctx context.Context, conf *configs.Config, logger *zap.Su
 	storeStorage := db.NewStoreStorage(conn)
 
 	externalRouter := chi.NewRouter()
+	externalRouter.Use(auth.Authenticator(config.TokenSecret))
 	// Test requests
-	externalRouter.Group(routes.InitRoutes(storeStorage))
+	externalRouter.Group(routes.InitRoutes(storeStorage, config))
 
-	srv, err := server.New(conf.ServerExternalPort)
+	srv, err := server.New(config.ServerExternalPort)
 	if err != nil {
 		return fmt.Errorf("server.New: %w", err)
 	}
-	logger.Infof("listening on :%s", conf.ServerExternalPort)
+	logger.Infof("listening on :%s", config.ServerExternalPort)
 	return srv.ServeHTTPHandler(ctx, externalRouter)
 }
 

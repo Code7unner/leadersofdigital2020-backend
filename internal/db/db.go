@@ -1,6 +1,5 @@
 package db
 
-
 import (
 	"database/sql"
 	_ "github.com/jackc/pgx"
@@ -23,6 +22,5 @@ type Storage interface {
 }
 
 type DBRow interface {
-	GetId () int64
+	GetId() int64
 }
-

@@ -10,7 +10,6 @@ type Product struct {
 	AdditionalInfo string  `json:"additional_info"`
 }
 
-
-func (p Product) GetId () int64 {
+func (p Product) GetId() int64 {
 	return p.Id
 }
