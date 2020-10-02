@@ -1,22 +1,15 @@
 package controller
 
-import (
-	"github.com/code7unner/leadersofdigital2020-backend/internal/service"
-	"net/http"
-)
+import "github.com/code7unner/leadersofdigital2020-backend/internal/service"
 
-type TestController interface {
-	TestCtrl(w http.ResponseWriter, r *http.Request)
+type Controller struct {
+	User     UserController
+	Products ProductsController
 }
 
-type testController struct {
-	service service.Servicer
-}
-
-func NewTestController(service service.Servicer) TestController {
-	return &testController{service}
-}
-
-func (t testController) TestCtrl(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Test"))
+func NewController(service service.Servicer) *Controller {
+	return &Controller{
+		User:     NewUserController(service),
+		Products: NewProductsController(service),
+	}
 }

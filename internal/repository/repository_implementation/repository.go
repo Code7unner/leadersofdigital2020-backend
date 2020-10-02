@@ -5,7 +5,6 @@ import (
 	"github.com/code7unner/leadersofdigital2020-backend/internal/repository"
 	"gopkg.in/reform.v1"
 	"gopkg.in/reform.v1/dialects/postgresql"
-	//"database/sql"
 )
 
 var (
@@ -13,19 +12,31 @@ var (
 )
 
 type Repository struct {
-	db          *reform.DB
-	test *TestRepository
+	db       *reform.DB
+	user     *UserRepository
+	products *ProductsRepository
 }
 
-func (r *Repository) Test() repository.TestRepository {
-	if r.test != nil {
-		return r.test
+func (r *Repository) Products() repository.ProductsRepository {
+	if r.products != nil {
+		return r.products
 	}
 
-	r.test = &TestRepository{
+	r.user = &UserRepository{
 		repository: r,
 	}
-	return r.test
+	return r.products
+}
+
+func (r *Repository) User() repository.UserRepository {
+	if r.user != nil {
+		return r.user
+	}
+
+	r.user = &UserRepository{
+		repository: r,
+	}
+	return r.user
 }
 
 func New(db *sql.DB, printf repository.Printf) repository.Repository {
@@ -36,4 +47,3 @@ func New(db *sql.DB, printf repository.Printf) repository.Repository {
 
 	return repo
 }
-

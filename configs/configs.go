@@ -12,7 +12,7 @@ type CommonEnvConfigs struct {
 	HostName           string `json:"HOSTNAME" env:"HOSTNAME"`
 	ServerExternalPort string `json:"SERVER_EXTERNAL_PORT" env:"SERVER_EXTERNAL_PORT" envDefault:"8080"`
 	// Postgres configs
-	PostgresDBStr  string `json:"POSTGRESS_DB_STR" env:"POSTGRESS_DB_STR"`
+	PostgresDBStr  string `json:"POSTGRESS_DB_STR" env:"POSTGRESS_DB_STR" envDefault:"postgres://postgres:postgres@localhost?sslmode=disable"`
 	PostgresUser   string `json:"POSTGRESS_USER" env:"POSTGRESS_USER"`
 	PostgresPass   string `json:"POSTGRESS_PASS" env:"POSTGRESS_PASS"`
 	PostgresDBName string `json:"POSTGRESS_DB_NAME" env:"POSTGRESS_DB_NAME"`

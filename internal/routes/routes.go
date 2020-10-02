@@ -6,10 +6,15 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func TestRoutes(service *service.Service) func(r chi.Router) {
+func InitRoutes(service *service.Service) func(r chi.Router) {
 	return func(r chi.Router) {
-		testController := controller.NewTestController(service)
+		c := controller.NewController(service)
 
-		r.HandleFunc("/test", testController.TestCtrl)
+		// User requests
+		r.HandleFunc("/user/create", c.User.CreateUser)
+		r.HandleFunc("/user/delete", c.User.DeleteUser)
+
+		// Product requests
+		r.HandleFunc("/products/get", c.Products.GetProducts)
 	}
 }

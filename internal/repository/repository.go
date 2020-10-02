@@ -1,9 +1,14 @@
 package repository
 
 type Repository interface {
-	Test() TestRepository
+	User() UserRepository
+	Products() ProductsRepository
 }
 
-type TestRepository interface {
+type UserRepository interface {
 	Print(string) error
+}
+
+type ProductsRepository interface {
+	Get(string) error
 }

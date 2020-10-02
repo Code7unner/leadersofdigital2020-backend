@@ -1,10 +1,9 @@
 package repository_implementation
 
-type TestRepository struct {
+type ProductsRepository struct {
 	repository *Repository
 }
 
-func (t TestRepository) Print(s string) error {
+func (t ProductsRepository) Get(s string) error {
 	panic("implement me")
 }
-

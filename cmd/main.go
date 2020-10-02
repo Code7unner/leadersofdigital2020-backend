@@ -57,7 +57,7 @@ func runExternalServer(ctx context.Context, conf *configs.CommonEnvConfigs) erro
 
 	externalRouter := chi.NewRouter()
 	// Test requests
-	externalRouter.Group(routes.TestRoutes(service))
+	externalRouter.Group(routes.InitRoutes(service))
 
 	srv, err := server.New(conf.ServerExternalPort)
 	if err != nil {
