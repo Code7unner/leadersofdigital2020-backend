@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/code7unner/leadersofdigital2020-backend/configs"
+)
 
 func main() {
-	fmt.Println("Hello, hack!")
+	envConfig := configs.GetCommonEnvConfigs()
+
+	fmt.Println(envConfig.HostName)
 }
