@@ -6,9 +6,9 @@ import (
 )
 
 type CommonEnvConfigs struct {
-	AppEnv   string `json:"APP_ENV" env:"APP_ENV" envDefault:"test"`
-	GinMode  string `json:"GIN_MODE" env:"GIN_MODE" envDefault:"test"`
-	HostName string `json:"HOSTNAME" env:"HOSTNAME" envDefault:"TESTHOSTNAME"`
+	AppEnv   string `json:"APP_ENV" env:"APP_ENV"`
+	GinMode  string `json:"GIN_MODE" env:"GIN_MODE"`
+	HostName string `json:"HOSTNAME" env:"HOSTNAME"`
 }
 
 func GetCommonEnvConfigs() CommonEnvConfigs {
