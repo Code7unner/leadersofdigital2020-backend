@@ -1,15 +1,17 @@
 package controller
 
-import "github.com/code7unner/leadersofdigital2020-backend/internal/service"
+import (
+	"github.com/code7unner/leadersofdigital2020-backend/internal/db"
+)
 
 type Controller struct {
-	User     UserController
-	Products ProductsController
+	User         UserController
+	Products     ProductsController
 }
 
-func NewController(service service.Servicer) *Controller {
+func NewController(storage db.Storage) *Controller {
 	return &Controller{
-		User:     NewUserController(service),
-		Products: NewProductsController(service),
+		User:         NewUserController(storage),
+		Products:     NewProductsController(storage),
 	}
 }

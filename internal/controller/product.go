@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/code7unner/leadersofdigital2020-backend/internal/service"
+	"github.com/code7unner/leadersofdigital2020-backend/internal/db"
 	"net/http"
 )
 
@@ -10,14 +10,16 @@ type ProductsController interface {
 }
 
 type productsController struct {
-	service service.Servicer
+	productsStorage db.Storage
 }
 
-func NewProductsController(service service.Servicer) ProductsController {
-	return &productsController{service}
+func NewProductsController(productsStorage db.Storage) ProductsController {
+	return &productsController{productsStorage}
 }
 
-func (p productsController) GetProducts(w http.ResponseWriter, r *http.Request) {
+func (c *productsController) GetProducts(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Get products"))
+
+	//storage := c.productsStorage.(*db.ProductStorage)
 }

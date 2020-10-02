@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/code7unner/leadersofdigital2020-backend/configs"
+	"github.com/code7unner/leadersofdigital2020-backend/internal/db"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/interrupt"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/logging"
-	"github.com/code7unner/leadersofdigital2020-backend/internal/repository/repository_implementation"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/routes"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/server"
-	newService "github.com/code7unner/leadersofdigital2020-backend/internal/service"
 	"github.com/go-chi/chi"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
@@ -46,15 +45,12 @@ func runExternalServer(ctx context.Context, conf *configs.Config, logger *zap.Su
 	}
 	defer conn.Close()
 
-	repository := repository_implementation.New(conn,
-		logger.Infof,
-	)
-
-	service := newService.New(repository)
+	// Init db service
+	storeStorage := db.NewStoreStorage(conn)
 
 	externalRouter := chi.NewRouter()
 	// Test requests
-	externalRouter.Group(routes.InitRoutes(service))
+	externalRouter.Group(routes.InitRoutes(storeStorage))
 
 	srv, err := server.New(conf.ServerExternalPort)
 	if err != nil {

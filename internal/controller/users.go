@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/code7unner/leadersofdigital2020-backend/internal/service"
+	"github.com/code7unner/leadersofdigital2020-backend/internal/db"
 	"net/http"
 )
 
@@ -11,16 +11,17 @@ type UserController interface {
 }
 
 type userController struct {
-	service service.Servicer
+	userStorage db.Storage
 }
 
-func NewUserController(service service.Servicer) UserController {
-	return &userController{service}
+func NewUserController(userStorage db.Storage) UserController {
+	return &userController{userStorage}
 }
 
-func (t *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (c *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Create User"))
+	//storage := c.userStorage.(*db.UserStorage)
 }
 
 func (t *userController) DeleteUser(w http.ResponseWriter, r *http.Request) {
