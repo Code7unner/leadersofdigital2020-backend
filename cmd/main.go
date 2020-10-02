@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"flag"
 	"fmt"
 	"github.com/code7unner/leadersofdigital2020-backend/configs"
 	"github.com/code7unner/leadersofdigital2020-backend/internal/interrupt"
@@ -15,34 +14,32 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 	"log"
 )
-
-var (
-	envPathFlag string
-)
-
-func init() {
-	flag.StringVar(&envPathFlag, "env", ".env", "env file path")
-	flag.Parse()
-}
 
 func main() {
 	ctx, done := interrupt.Context()
 	defer done()
 
-	// Initialize config
-	conf := configs.GetCommonEnvConfigs()
+	// Initialize logger
+	logger := logging.FromContext(ctx)
 
-	if err := runExternalServer(ctx, &conf); err != nil {
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+
+	// Initialize config
+	config := configs.NewConfig()
+
+	if err := runExternalServer(ctx, config, logger); err != nil {
 		logger := logging.FromContext(ctx)
 		logger.Fatal(err)
 	}
 }
 
-func runExternalServer(ctx context.Context, conf *configs.CommonEnvConfigs) error {
-	logger := logging.FromContext(ctx)
-
+func runExternalServer(ctx context.Context, conf *configs.Config, logger *zap.SugaredLogger) error {
 	conn, err := newDB(conf.PostgresDBStr)
 	if err != nil {
 		log.Fatal(err)

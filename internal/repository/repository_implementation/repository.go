@@ -28,6 +28,15 @@ func (r *Repository) Products() repository.ProductsRepository {
 	return r.products
 }
 
+func New(db *sql.DB, printf repository.Printf) repository.Repository {
+	repo := new(Repository)
+
+	logger := reform.NewPrintfLogger(reform.Printf(printf))
+	repo.db = reform.NewDB(db, dialect, logger)
+
+	return repo
+}
+
 func (r *Repository) User() repository.UserRepository {
 	if r.user != nil {
 		return r.user
@@ -37,13 +46,4 @@ func (r *Repository) User() repository.UserRepository {
 		repository: r,
 	}
 	return r.user
-}
-
-func New(db *sql.DB, printf repository.Printf) repository.Repository {
-	repo := new(Repository)
-
-	logger := reform.NewPrintfLogger(reform.Printf(printf))
-	repo.db = reform.NewDB(db, dialect, logger)
-
-	return repo
 }

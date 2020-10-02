@@ -3,18 +3,18 @@ package service
 import "github.com/code7unner/leadersofdigital2020-backend/internal/repository"
 
 type Servicer interface {
-	Test() Tester
+	User() UserServicer
 }
 
 type Service struct {
 	/* Репозиторий для работы с базой */
 	repository repository.Repository
 
-	test       *TestService
+	user *UserService
 }
 
-type Tester interface {
-	PrintTest(string) error
+type UserServicer interface {
+	GetUser(string) error
 }
 
 func New(repository repository.Repository) *Service {
@@ -23,14 +23,14 @@ func New(repository repository.Repository) *Service {
 	}
 }
 
-func (s *Service) Test() Tester {
-	if s.test != nil {
-		return s.test
+func (s *Service) User() UserServicer {
+	if s.user != nil {
+		return s.user
 	}
 
-	s.test = &TestService{
+	s.user = &UserService{
 		service: s,
 	}
 
-	return s.test
+	return s.user
 }
