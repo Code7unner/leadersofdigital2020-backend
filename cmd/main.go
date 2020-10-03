@@ -66,6 +66,10 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 	}
 
 	r := chi.NewRouter()
+
+	// Cors middleware
+	r.Use(cors)
+
 	// Protected router
 	r.Group(func(r chi.Router) {
 		r.Use(auth.Verifier(auth.New("HS256", []byte(config.TokenSecret), nil)))
@@ -96,6 +100,17 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 	}
 	logger.Infof("listening on :%s", config.ServerExternalPort)
 	return srv.ServeHTTPHandler(ctx, r)
+}
+
+func cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-CSRF-Token")
+		w.Header().Set("Access-Control-Expose-Headers", "Authorization")
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func newDB(sqlConnString string) (*sql.DB, error) {
