@@ -18,7 +18,7 @@ type ProductStorage struct {
 }
 
 func (s *ProductStorage) Insert(row DBRow) error {
-	dbRow, ok := row.(*Product)
+	dbRow, ok := row.(Product)
 	if !ok {
 		return errors.New("product validation error")
 	}

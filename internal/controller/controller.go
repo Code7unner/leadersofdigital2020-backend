@@ -12,11 +12,11 @@ type Controller struct {
 	Store    StoreController
 }
 
-func NewController(storage db.Storage, config *configs.Config) *Controller {
+func NewController(config *configs.Config, storages ...db.Storage) *Controller {
 	return &Controller{
-		User:     NewUserController(storage, config),
-		Products: NewProductsController(storage, config),
-		Order:    NewOrderController(storage, config),
-		Store:    NewStoreController(storage, config),
+		User:     NewUserController(storages[0], config),
+		Products: NewProductsController(storages[1], config),
+		Order:    NewOrderController(storages[2], config),
+		Store:    NewStoreController(storages[3], config),
 	}
 }

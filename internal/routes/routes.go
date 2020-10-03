@@ -7,13 +7,12 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func InitRoutes(storage db.Storage, config *configs.Config) func(r chi.Router) {
+func InitRoutes(config *configs.Config, storages ...db.Storage) func(r chi.Router) {
 	return func(r chi.Router) {
-		c := controller.NewController(storage, config)
+		c := controller.NewController(config, storages...)
 
 		// User requests
 		r.HandleFunc("/user/create", c.User.CreateUser)
-		r.HandleFunc("/user/register", c.User.Register)
 		r.HandleFunc("/user/{id}", c.User.GetUser)
 
 		// Product requests

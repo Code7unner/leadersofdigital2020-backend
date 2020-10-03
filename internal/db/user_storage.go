@@ -18,7 +18,7 @@ type UserStorage struct {
 }
 
 func (s *UserStorage) Insert(row DBRow) error {
-	dbRow, ok := row.(*User)
+	dbRow, ok := row.(User)
 	if !ok {
 		return errors.New("user validation error")
 	}

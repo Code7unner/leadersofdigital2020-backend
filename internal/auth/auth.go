@@ -1,42 +1,54 @@
 package auth
 
 import (
-	"github.com/code7unner/leadersofdigital2020-backend/internal/logging"
+	"encoding/json"
+	"github.com/code7unner/leadersofdigital2020-backend/internal/controller/model"
 	"github.com/code7unner/leadersofdigital2020-backend/utils"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
+	"time"
 )
 
-func Authenticator(secret string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			logger := logging.FromContext(ctx)
-			tokenStr, err := VerifyRequest(r, TokenFromQuery, TokenFromHeader, TokenFromCookie)
-			if err != nil {
-				logger.Errorf("Auth: token not found: %s", err.Error())
-				utils.ErrorHandler(w, err, http.StatusUnauthorized)
-				return
-			}
+type AuthToken struct {
+	TokenType string `json:"token_type"`
+	Token     string `json:"access_token"`
+	ExpiresIn int64  `json:"expires_in"`
+}
 
-			claims := &TokenClaim{}
-			tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-				return []byte(secret), nil
-			})
-			if err != nil {
-				if err == jwt.ErrSignatureInvalid {
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				}
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			if !tkn.Valid {
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
+type TokenClaim struct {
+	*jwt.StandardClaims
+	model.RegisterUser
+}
 
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
+func Register(secret string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var registerUser model.RegisterUser
+
+		if err := json.NewDecoder(r.Body).Decode(&registerUser); err != nil {
+			utils.ErrorHandler(w, err, http.StatusBadRequest)
+			return
+		}
+
+		expiresAt := time.Now().Add(time.Hour * 100).Unix()
+		token := jwt.New(jwt.SigningMethodHS256)
+
+		token.Claims = &TokenClaim{
+			StandardClaims: &jwt.StandardClaims{
+				ExpiresAt: expiresAt,
+			},
+			RegisterUser: registerUser,
+		}
+
+		tokenString, err := token.SignedString([]byte(secret))
+		if err != nil {
+			utils.ErrorHandler(w, err, http.StatusBadRequest)
+		}
+
+		data := AuthToken{
+			Token:     tokenString,
+			TokenType: "Bearer",
+			ExpiresIn: expiresAt,
+		}
+		utils.SuccessHandler(w, http.StatusOK, data)
 	}
 }

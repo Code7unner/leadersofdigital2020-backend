@@ -2,7 +2,7 @@ CREATE TABLE "products" (
     "id" serial NOT NULL,
     "name" serial NOT NULL,
     "type" TEXT NOT NULL,
-    "discription" TEXT,
+    "description" TEXT,
     "price" float8 NOT NULL,
     "img_url" TEXT NOT NULL,
     "additional_info" TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE "users" (
      "role" TEXT NOT NULL,
      CONSTRAINT "users_pk" PRIMARY KEY ("id")
 ) WITH (
-      OIDS=FALSE
+     OIDS=FALSE
 );
 
 CREATE TABLE "stores" (

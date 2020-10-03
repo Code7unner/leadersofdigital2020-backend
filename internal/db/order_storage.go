@@ -18,7 +18,7 @@ type OrderStorage struct {
 }
 
 func (s *OrderStorage) Insert(row DBRow) error {
-	dbRow, ok := row.(*Order)
+	dbRow, ok := row.(Order)
 	if !ok {
 		return errors.New("order validation failed")
 	}

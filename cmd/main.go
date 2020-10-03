@@ -46,20 +46,35 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 	}
 	defer conn.Close()
 
-	// Init db service
-	storeStorage := db.NewStoreStorage(conn)
+	// Init db storages
+	var storages = []db.Storage{
+		db.NewUserStorage(conn),
+		db.NewProductStorage(conn),
+		db.NewOrderStorage(conn),
+		db.NewStoreStorage(conn),
+	}
 
-	externalRouter := chi.NewRouter()
-	externalRouter.Use(auth.Authenticator(config.TokenSecret))
-	// Test requests
-	externalRouter.Group(routes.InitRoutes(storeStorage, config))
+	r := chi.NewRouter()
+
+	// Protected routes
+	r.Group(func(r chi.Router) {
+		r.Use(auth.Verifier(auth.New("HS256", []byte(config.TokenSecret), nil)))
+		r.Use(auth.Authenticator)
+
+		r.Route("/api/v1", routes.InitRoutes(config, storages...))
+	})
+
+	// Public routes
+	r.Group(func(r chi.Router) {
+		r.Post("/register", auth.Register(config.TokenSecret))
+	})
 
 	srv, err := server.New(config.ServerExternalPort)
 	if err != nil {
 		return fmt.Errorf("server.New: %w", err)
 	}
 	logger.Infof("listening on :%s", config.ServerExternalPort)
-	return srv.ServeHTTPHandler(ctx, externalRouter)
+	return srv.ServeHTTPHandler(ctx, r)
 }
 
 func newDB(sqlConnString string) (*sql.DB, error) {

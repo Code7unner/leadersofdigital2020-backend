@@ -1,26 +1,71 @@
 package auth
 
 import (
+	"context"
 	"errors"
-	"github.com/code7unner/leadersofdigital2020-backend/internal/controller/model"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
 	"strings"
+	"time"
 )
 
-type AuthToken struct {
-	TokenType string `json:"token_type"`
-	Token     string `json:"access_token"`
-	ExpiresIn int64  `json:"expires_in"`
+var (
+	TokenCtxKey = &contextKey{"Token"}
+	ErrorCtxKey = &contextKey{"Error"}
+)
+
+var (
+	ErrUnauthorized = errors.New("jwtauth: token is unauthorized")
+	ErrExpired      = errors.New("jwtauth: token is expired")
+	ErrNBFInvalid   = errors.New("jwtauth: token nbf validation failed")
+	ErrIATInvalid   = errors.New("jwtauth: token iat validation failed")
+	ErrNoTokenFound = errors.New("jwtauth: no token found")
+	ErrAlgoInvalid  = errors.New("jwtauth: algorithm mismatch")
+)
+
+type JWTAuth struct {
+	signKey   interface{}
+	verifyKey interface{}
+	signer    jwt.SigningMethod
+	parser    *jwt.Parser
 }
 
-type TokenClaim struct {
-	*jwt.StandardClaims
-	model.RegisterUser
+func New(alg string, signKey interface{}, verifyKey interface{}) *JWTAuth {
+	return NewWithParser(alg, &jwt.Parser{}, signKey, verifyKey)
 }
 
-func VerifyRequest(r *http.Request, findTokenFns ...func(r *http.Request) string) (string, error) {
+func NewWithParser(alg string, parser *jwt.Parser, signKey interface{}, verifyKey interface{}) *JWTAuth {
+	return &JWTAuth{
+		signKey:   signKey,
+		verifyKey: verifyKey,
+		signer:    jwt.GetSigningMethod(alg),
+		parser:    parser,
+	}
+}
+
+func Verifier(ja *JWTAuth) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return Verify(ja, TokenFromQuery, TokenFromHeader, TokenFromCookie)(next)
+	}
+}
+
+func Verify(ja *JWTAuth, findTokenFns ...func(r *http.Request) string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		hfn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			token, err := VerifyRequest(ja, r, findTokenFns...)
+			ctx = NewContext(ctx, token, err)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+		return http.HandlerFunc(hfn)
+	}
+}
+
+func VerifyRequest(ja *JWTAuth, r *http.Request, findTokenFns ...func(r *http.Request) string) (*jwt.Token, error) {
 	var tokenStr string
+	var err error
+
 	for _, fn := range findTokenFns {
 		tokenStr = fn(r)
 		if tokenStr != "" {
@@ -28,13 +73,142 @@ func VerifyRequest(r *http.Request, findTokenFns ...func(r *http.Request) string
 		}
 	}
 	if tokenStr == "" {
-		return "", errors.New("jwtauth: no token found")
+		return nil, ErrNoTokenFound
 	}
 
-	return tokenStr, nil
+	// Verify the token
+	token, err := ja.Decode(tokenStr)
+	if err != nil {
+		if verr, ok := err.(*jwt.ValidationError); ok {
+			if verr.Errors&jwt.ValidationErrorExpired > 0 {
+				return token, ErrExpired
+			} else if verr.Errors&jwt.ValidationErrorIssuedAt > 0 {
+				return token, ErrIATInvalid
+			} else if verr.Errors&jwt.ValidationErrorNotValidYet > 0 {
+				return token, ErrNBFInvalid
+			}
+		}
+		return token, err
+	}
+
+	if token == nil || !token.Valid {
+		err = ErrUnauthorized
+		return token, err
+	}
+
+	// Verify signing algorithm
+	if token.Method != ja.signer {
+		return token, ErrAlgoInvalid
+	}
+
+	return token, nil
 }
 
-// TokenFromCookie tries to retreive the token string from a cookie named "jwt".
+func (ja *JWTAuth) Encode(claims jwt.Claims) (t *jwt.Token, tokenString string, err error) {
+	t = jwt.New(ja.signer)
+	t.Claims = claims
+	tokenString, err = t.SignedString(ja.signKey)
+	t.Raw = tokenString
+	return
+}
+
+func (ja *JWTAuth) Decode(tokenString string) (t *jwt.Token, err error) {
+	t, err = ja.parser.Parse(tokenString, ja.keyFunc)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+func (ja *JWTAuth) keyFunc(t *jwt.Token) (interface{}, error) {
+	if ja.verifyKey != nil {
+		return ja.verifyKey, nil
+	} else {
+		return ja.signKey, nil
+	}
+}
+
+func Authenticator(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, _, err := FromContext(r.Context())
+
+		if err != nil {
+			http.Error(w, http.StatusText(401), 401)
+			return
+		}
+
+		if token == nil || !token.Valid {
+			http.Error(w, http.StatusText(401), 401)
+			return
+		}
+
+		// Token is authenticated, pass it through
+		next.ServeHTTP(w, r)
+	})
+}
+
+func NewContext(ctx context.Context, t *jwt.Token, err error) context.Context {
+	ctx = context.WithValue(ctx, TokenCtxKey, t)
+	ctx = context.WithValue(ctx, ErrorCtxKey, err)
+	return ctx
+}
+
+func FromContext(ctx context.Context) (*jwt.Token, jwt.MapClaims, error) {
+	token, _ := ctx.Value(TokenCtxKey).(*jwt.Token)
+
+	var claims jwt.MapClaims
+	if token != nil {
+		if tokenClaims, ok := token.Claims.(jwt.MapClaims); ok {
+			claims = tokenClaims
+		} else {
+			panic(fmt.Sprintf("jwtauth: unknown type of Claims: %T", token.Claims))
+		}
+	} else {
+		claims = jwt.MapClaims{}
+	}
+
+	err, _ := ctx.Value(ErrorCtxKey).(error)
+
+	return token, claims, err
+}
+
+// UnixTime returns the given time in UTC milliseconds
+func UnixTime(tm time.Time) int64 {
+	return tm.UTC().Unix()
+}
+
+// EpochNow is a helper function that returns the NumericDate time value used by the spec
+func EpochNow() int64 {
+	return time.Now().UTC().Unix()
+}
+
+// ExpireIn is a helper function to return calculated time in the future for "exp" claim
+func ExpireIn(tm time.Duration) int64 {
+	return EpochNow() + int64(tm.Seconds())
+}
+
+// Set issued at ("iat") to specified time in the claims
+func SetIssuedAt(claims jwt.MapClaims, tm time.Time) {
+	claims["iat"] = tm.UTC().Unix()
+}
+
+// Set issued at ("iat") to present time in the claims
+func SetIssuedNow(claims jwt.MapClaims) {
+	claims["iat"] = EpochNow()
+}
+
+// Set expiry ("exp") in the claims
+func SetExpiry(claims jwt.MapClaims, tm time.Time) {
+	claims["exp"] = tm.UTC().Unix()
+}
+
+// Set expiry ("exp") in the claims to some duration from the present time
+func SetExpiryIn(claims jwt.MapClaims, tm time.Duration) {
+	claims["exp"] = ExpireIn(tm)
+}
+
+// TokenFromCookie tries to retreive the token string from a cookie named
+// "jwt".
 func TokenFromCookie(r *http.Request) string {
 	cookie, err := r.Cookie("jwt")
 	if err != nil {
@@ -43,6 +217,7 @@ func TokenFromCookie(r *http.Request) string {
 	return cookie.Value
 }
 
+// TokenFromHeader tries to retreive the token string from the
 // "Authorization" reqeust header: "Authorization: BEARER T".
 func TokenFromHeader(r *http.Request) string {
 	// Get token from authorization header.
@@ -53,8 +228,20 @@ func TokenFromHeader(r *http.Request) string {
 	return ""
 }
 
-// TokenFromQuery tries to retreive the token string from the "jwt" URI query parameter.
+// TokenFromQuery tries to retreive the token string from the "jwt" URI
+// query parameter.
 func TokenFromQuery(r *http.Request) string {
 	// Get token from query param named "jwt".
 	return r.URL.Query().Get("jwt")
+}
+
+// contextKey is a value for use with context.WithValue. It's used as
+// a pointer so it fits in an interface{} without allocation. This technique
+// for defining context keys was copied from Go 1.7's new use of context in net/http.
+type contextKey struct {
+	name string
+}
+
+func (k *contextKey) String() string {
+	return "jwtauth context value " + k.name
 }
