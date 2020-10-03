@@ -87,7 +87,7 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 			}
 		})
 
-		r.Post("/register", auth.Register(config.TokenSecret))
+		r.Options("/register", auth.Register(config.TokenSecret))
 	})
 
 	srv, err := server.New(config.ServerExternalPort)
