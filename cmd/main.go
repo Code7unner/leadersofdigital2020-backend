@@ -40,11 +40,20 @@ func main() {
 }
 
 func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.SugaredLogger) error {
-	conn, err := newDB(config.PostgresDBStr)
-	if err != nil {
-		log.Fatal(err)
+	var conn *sql.DB
+	if config.AppEnv == "production" {
+		conn, err := newDB(config.PostgresDBStr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+	} else {
+		conn, err := newDB(config.PostgresTestDBStr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
 	}
-	defer conn.Close()
 
 	// Init db storages
 	var storages = []db.Storage{
@@ -55,8 +64,7 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 	}
 
 	r := chi.NewRouter()
-
-	// Protected routes
+	// Protected router
 	r.Group(func(r chi.Router) {
 		r.Use(auth.Verifier(auth.New("HS256", []byte(config.TokenSecret), nil)))
 		r.Use(auth.Authenticator)
