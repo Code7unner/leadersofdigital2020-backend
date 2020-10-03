@@ -89,7 +89,7 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 			}
 		})
 
-		r.Options("/register", auth.Register(config.TokenSecret))
+		r.Post("/register", auth.Register(config.TokenSecret))
 	})
 
 	// Cors
