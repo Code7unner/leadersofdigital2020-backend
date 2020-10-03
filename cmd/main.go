@@ -17,6 +17,8 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"log"
+	"net/http"
+	"os"
 )
 
 func main() {
@@ -72,8 +74,19 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 		r.Route("/api/v1", routes.InitRoutes(config, storages...))
 	})
 
+	root := "./dist"
+	fs := http.FileServer(http.Dir(root))
+
 	// Public routes
 	r.Group(func(r chi.Router) {
+		r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+			if _, err := os.Stat(root + r.RequestURI); os.IsNotExist(err) {
+				http.StripPrefix(r.RequestURI, fs).ServeHTTP(w, r)
+			} else {
+				fs.ServeHTTP(w, r)
+			}
+		})
+
 		r.Post("/register", auth.Register(config.TokenSecret))
 	})
 
