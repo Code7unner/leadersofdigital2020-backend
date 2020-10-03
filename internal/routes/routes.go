@@ -25,7 +25,7 @@ func InitRoutes(config *configs.Config, storages ...db.Storage) func(r chi.Route
 
 		// Order requests
 		r.Post("/order/create", c.Order.Create)
-		r.Post("/order/delete/{id}", c.Order.Delete)
+		r.Get("/order/delete/{id}", c.Order.Delete)
 		r.Get("/order/{id}", c.Order.GetById)
 		r.Get("/order/{courier_id}", c.Order.GetByCourierId)
 
