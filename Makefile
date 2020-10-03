@@ -1,3 +1,4 @@
 .PHONY: build
 build:
-	cd ./cmd && go build -o digital
+	git pull
+	cd cmd/ && CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo && cd ../ && ./cmd/cmd

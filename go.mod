@@ -10,6 +10,7 @@ require (
 	github.com/jackc/pgx/v4 v4.9.0
 	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.8.0
+	github.com/rs/cors v1.7.0
 	go.opencensus.io v0.22.4
 	go.uber.org/zap v1.16.0
 	gopkg.in/reform.v1 v1.4.1 // indirect

@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -67,9 +68,6 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 
 	r := chi.NewRouter()
 
-	// Cors middleware
-	r.Use(cors)
-
 	// Protected router
 	r.Group(func(r chi.Router) {
 		r.Use(auth.Verifier(auth.New("HS256", []byte(config.TokenSecret), nil)))
@@ -94,23 +92,22 @@ func runExternalServer(ctx context.Context, config *configs.Config, logger *zap.
 		r.Options("/register", auth.Register(config.TokenSecret))
 	})
 
+	// Cors
+	handler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Requested-With"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}).Handler(r)
+
 	srv, err := server.New(config.ServerExternalPort)
 	if err != nil {
 		return fmt.Errorf("server.New: %w", err)
 	}
 	logger.Infof("listening on :%s", config.ServerExternalPort)
-	return srv.ServeHTTPHandler(ctx, r)
-}
-
-func cors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		header := w.Header()
-		header.Add("Access-Control-Allow-Origin", "*")
-		header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
-		header.Add("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
-
-		next.ServeHTTP(w, r)
-	})
+	return srv.ServeHTTPHandler(ctx, handler)
 }
 
 func newDB(sqlConnString string) (*sql.DB, error) {
