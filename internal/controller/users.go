@@ -12,10 +12,9 @@ import (
 )
 
 type UserController interface {
-	CreateUser(w http.ResponseWriter, r *http.Request)
+	Create(w http.ResponseWriter, r *http.Request)
 	GetUser(w http.ResponseWriter, r *http.Request)
-	// TODO:
-	DeleteUser(w http.ResponseWriter, r *http.Request)
+	Delete(w http.ResponseWriter, r *http.Request)
 	// TODO:
 	Login(w http.ResponseWriter, r *http.Request)
 }
@@ -29,7 +28,7 @@ func NewUserController(userStorage db.Storage, config *configs.Config) UserContr
 	return &userController{userStorage, config}
 }
 
-func (c *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (c *userController) Create(w http.ResponseWriter, r *http.Request) {
 	var user db.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		utils.ErrorHandler(w, err, http.StatusBadRequest)
@@ -45,9 +44,26 @@ func (c *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	utils.SuccessHandler(w, http.StatusOK, nil)
 }
 
-func (t *userController) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Delete User"))
+func (c *userController) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		utils.ErrorHandler(w, errors.New("id query param is not valid"), http.StatusBadRequest)
+		return
+	}
+
+	userId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		utils.ErrorHandler(w, err, http.StatusBadRequest)
+		return
+	}
+
+	storage := c.userStorage.(*db.UserStorage)
+	if err := storage.DeleteById(userId); err != nil {
+		utils.ErrorHandler(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessHandler(w, http.StatusOK, nil)
 }
 
 func (c *userController) Login(w http.ResponseWriter, r *http.Request) {

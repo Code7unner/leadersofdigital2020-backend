@@ -16,6 +16,7 @@ type ProductsController interface {
 	GetProductsByType(w http.ResponseWriter, r *http.Request)
 	GetProductsByOrderId(w http.ResponseWriter, r *http.Request)
 	Create(w http.ResponseWriter, r *http.Request)
+	Delete(w http.ResponseWriter, r *http.Request)
 }
 
 type productsController struct {
@@ -25,6 +26,28 @@ type productsController struct {
 
 func NewProductsController(productsStorage db.Storage, config *configs.Config) ProductsController {
 	return &productsController{productsStorage, config}
+}
+
+func (c *productsController) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		utils.ErrorHandler(w, errors.New("id query param is not valid"), http.StatusBadRequest)
+		return
+	}
+
+	userId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		utils.ErrorHandler(w, err, http.StatusBadRequest)
+		return
+	}
+
+	storage := c.productsStorage.(*db.ProductStorage)
+	if err := storage.DeleteById(userId); err != nil {
+		utils.ErrorHandler(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessHandler(w, http.StatusOK, nil)
 }
 
 func (c *productsController) GetProductsByOrderId(w http.ResponseWriter, r *http.Request) {

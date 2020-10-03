@@ -12,21 +12,25 @@ func InitRoutes(config *configs.Config, storages ...db.Storage) func(r chi.Route
 		c := controller.NewController(config, storages...)
 
 		// User requests
-		r.HandleFunc("/user/create", c.User.CreateUser)
-		r.HandleFunc("/user/{id}", c.User.GetUser)
+		r.Post("/user/create", c.User.Create)
+		r.Get("/user/delete/{id}", c.User.Delete)
+		r.Get("/user/{id}", c.User.GetUser)
 
 		// Product requests
-		r.HandleFunc("/products/get", c.Products.GetProducts)
-		r.HandleFunc("/products/create", c.Products.Create)
-		r.HandleFunc("/products/get/{type}", c.Products.GetProductsByType)
-		r.HandleFunc("/products/get/{order_id}", c.Products.GetProductsByOrderId)
+		r.Get("/products/get", c.Products.GetProducts)
+		r.Post("/products/create", c.Products.Create)
+		r.Get("/products/delete/{id}", c.Products.Delete)
+		r.Get("/products/get/{type}", c.Products.GetProductsByType)
+		r.Get("/products/get/{order_id}", c.Products.GetProductsByOrderId)
 
 		// Order requests
-		r.HandleFunc("/order/create", c.Order.Create)
-		r.HandleFunc("/order/{id}", c.Order.GetById)
-		r.HandleFunc("/order/{courier_id}", c.Order.GetByCourierId)
+		r.Post("/order/create", c.Order.Create)
+		r.Post("/order/delete/{id}", c.Order.Delete)
+		r.Get("/order/{id}", c.Order.GetById)
+		r.Get("/order/{courier_id}", c.Order.GetByCourierId)
 
 		// Store requests
-		r.HandleFunc("/store/create", c.Store.Create)
+		r.Post("/store/create", c.Store.Create)
+		r.Get("/store/delete/{id}", c.Store.Delete)
 	}
 }

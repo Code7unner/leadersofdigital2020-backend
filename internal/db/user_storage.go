@@ -10,6 +10,8 @@ const (
 	insertUserQuery = `
 		INSERT INTO users ("id", "name", "phone", "password", "address", "sex", "role")
 		VALUES($1, $2, $3, $4, $5, $6, $7);`
+	deleteUserQuery = `
+		DELETE FROM users WHERE id = $1;`
 )
 
 type UserStorage struct {
@@ -47,6 +49,7 @@ func (s *UserStorage) Insert(row DBRow) error {
 
 	return nil
 }
+
 func (s *UserStorage) GetUserById(id int64) (user DBRow, err error) {
 	sqlQ, _, err := sq.Select("id", "name", "phone", "password", "address", "sex", "role").
 		From(s.tableName).
@@ -67,6 +70,26 @@ func (s *UserStorage) GetUserById(id int64) (user DBRow, err error) {
 	user = &row
 
 	return user, err
+}
+
+func (s *UserStorage) DeleteById(id int64) error {
+	bdTx, err := s.conn.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = bdTx.Exec(
+		deleteUserQuery,
+		id)
+	if err != nil {
+		return err
+	}
+
+	if err := bdTx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewUserStorage(conn *sql.DB) Storage {

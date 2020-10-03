@@ -9,6 +9,8 @@ const (
 	insertStoreQuery = `
 		INSERT INTO stores ("id", "name", "address")
 		VALUES($1, $2, $3);`
+	deleteStoreQuery = `
+		DELETE FROM stores WHERE id = $1;`
 )
 
 type StoreStorage struct {
@@ -32,6 +34,26 @@ func (s *StoreStorage) Insert(row DBRow) error {
 		dbRow.Id,
 		dbRow.Name,
 		dbRow.Address)
+	if err != nil {
+		return err
+	}
+
+	if err := bdTx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *StoreStorage) DeleteById(id int64) error {
+	bdTx, err := s.conn.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = bdTx.Exec(
+		deleteStoreQuery,
+		id)
 	if err != nil {
 		return err
 	}

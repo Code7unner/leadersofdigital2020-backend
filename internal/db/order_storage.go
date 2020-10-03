@@ -10,6 +10,8 @@ const (
 	insertOrderQuery = `
 		INSERT INTO orders ("id", "courier_id", "status")
 		VALUES($1, $2, $3);`
+	deleteOrderQuery = `
+		DELETE FROM orders WHERE id = $1;`
 )
 
 type OrderStorage struct {
@@ -89,6 +91,26 @@ func (s *OrderStorage) SelectByCourier(courierId int64) (orders []DBRow, err err
 	}
 
 	return orders, nil
+}
+
+func (s *OrderStorage) DeleteById(id int64) error {
+	bdTx, err := s.conn.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = bdTx.Exec(
+		deleteOrderQuery,
+		id)
+	if err != nil {
+		return err
+	}
+
+	if err := bdTx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewOrderStorage(conn *sql.DB) Storage {

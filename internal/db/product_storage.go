@@ -10,6 +10,8 @@ const (
 	insertProductQuery = `
 		INSERT INTO products ("id", "name", "type", "description", "price", "img_url", "additional_info")
 		VALUES($1, $2, $3, $4, $5, $6, $7);`
+	deleteProductQuery = `
+		DELETE FROM products WHERE id = $1;`
 )
 
 type ProductStorage struct {
@@ -37,6 +39,26 @@ func (s *ProductStorage) Insert(row DBRow) error {
 		dbRow.Price,
 		dbRow.ImgUrl,
 		dbRow.AdditionalInfo)
+	if err != nil {
+		return err
+	}
+
+	if err := bdTx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ProductStorage) DeleteById(id int64) error {
+	bdTx, err := s.conn.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = bdTx.Exec(
+		deleteProductQuery,
+		id)
 	if err != nil {
 		return err
 	}

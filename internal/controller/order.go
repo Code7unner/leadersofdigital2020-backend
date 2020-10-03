@@ -13,6 +13,7 @@ import (
 
 type OrderController interface {
 	Create(w http.ResponseWriter, r *http.Request)
+	Delete(w http.ResponseWriter, r *http.Request)
 	GetById(w http.ResponseWriter, r *http.Request)
 	GetByCourierId(w http.ResponseWriter, r *http.Request)
 }
@@ -24,6 +25,28 @@ type orderController struct {
 
 func NewOrderController(orderStorage db.Storage, config *configs.Config) OrderController {
 	return &orderController{orderStorage, config}
+}
+
+func (c *orderController) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		utils.ErrorHandler(w, errors.New("id query param is not valid"), http.StatusBadRequest)
+		return
+	}
+
+	userId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		utils.ErrorHandler(w, err, http.StatusBadRequest)
+		return
+	}
+
+	storage := c.orderStorage.(*db.OrderStorage)
+	if err := storage.DeleteById(userId); err != nil {
+		utils.ErrorHandler(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessHandler(w, http.StatusOK, nil)
 }
 
 func (c *orderController) GetById(w http.ResponseWriter, r *http.Request) {
