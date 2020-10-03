@@ -13,24 +13,24 @@ func InitRoutes(config *configs.Config, storages ...db.Storage) func(r chi.Route
 
 		// User requests
 		r.Post("/user/create", c.User.Create)
-		r.Get("/user/delete/{id}", c.User.Delete)
+		r.Delete("/user/delete/{id}", c.User.Delete)
 		r.Get("/user/{id}", c.User.GetUser)
 
 		// Product requests
 		r.Get("/products/get", c.Products.GetProducts)
 		r.Post("/products/create", c.Products.Create)
-		r.Get("/products/delete/{id}", c.Products.Delete)
+		r.Delete("/products/delete/{id}", c.Products.Delete)
 		r.Get("/products/get/{type}", c.Products.GetProductsByType)
 		r.Get("/products/get/{order_id}", c.Products.GetProductsByOrderId)
 
 		// Order requests
 		r.Post("/order/create", c.Order.Create)
-		r.Get("/order/delete/{id}", c.Order.Delete)
+		r.Delete("/order/delete/{id}", c.Order.Delete)
 		r.Get("/order/{id}", c.Order.GetById)
 		r.Get("/order/{courier_id}", c.Order.GetByCourierId)
 
 		// Store requests
 		r.Post("/store/create", c.Store.Create)
-		r.Get("/store/delete/{id}", c.Store.Delete)
+		r.Delete("/store/delete/{id}", c.Store.Delete)
 	}
 }
