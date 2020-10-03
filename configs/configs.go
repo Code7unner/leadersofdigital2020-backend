@@ -11,7 +11,7 @@ type Config struct {
 	ServerExternalPort string `json:"SERVER_EXTERNAL_PORT" env:"SERVER_EXTERNAL_PORT"`
 	// Postgres configs
 	PostgresDBStr     string `json:"POSTGRESS_DB_STR" env:"POSTGRESS_DB_STR"`
-	PostgresTestDBStr string `json:"POSTGRESS_TEST_DB_STR" env:"POSTGRESS_DB_STR"`
+	PostgresTestDBStr string `json:"POSTGRESS_TEST_DB_STR" env:"POSTGRESS_TEST_DB_STR"`
 	// Nexmo configs (mobile notification service)
 	NexmoApiKey    string `json:"NEXMO_API_KEY"`
 	NexmoApiSecret string `json:"NEXMO_API_SECRET"`
