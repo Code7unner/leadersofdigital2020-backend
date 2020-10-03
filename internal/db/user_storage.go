@@ -66,7 +66,6 @@ func (s *UserStorage) GetUserById(id int64) (user DBRow, err error) {
 
 	user = &row
 
-
 	return user, err
 }
 

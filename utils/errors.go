@@ -11,11 +11,8 @@ type ErrorResponse struct {
 }
 
 func ErrorHandler(w http.ResponseWriter, err error, code int) {
-	var errorResponse ErrorResponse
-	errorResponse.Error = err.Error()
-	errorResponse.Code = code
-
+	var errorResponse = ErrorResponse{code, err.Error()}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-
 	json.NewEncoder(w).Encode(errorResponse)
 }

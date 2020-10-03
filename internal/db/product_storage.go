@@ -48,9 +48,8 @@ func (s *ProductStorage) Insert(row DBRow) error {
 	return nil
 }
 
-
 func (s *ProductStorage) GetAllProducts() (products []DBRow, err error) {
-	sqlQ, _ , err := sq.Select("id", "name", "type", "description", "price", "image_url", "additional_info").
+	sqlQ, _, err := sq.Select("id", "name", "type", "description", "price", "image_url", "additional_info").
 		From(s.tableName).
 		ToSql()
 	if err != nil {
@@ -73,13 +72,12 @@ func (s *ProductStorage) GetAllProducts() (products []DBRow, err error) {
 		products = append(products, product)
 	}
 
-
 	return products, nil
 }
 
 func (s *ProductStorage) SelectByType(productType string) (products []DBRow, err error) {
 
-	sqlQ, _ , err := sq.Select("id", "name", "type", "description", "price", "image_url", "additional_info").
+	sqlQ, _, err := sq.Select("id", "name", "type", "description", "price", "image_url", "additional_info").
 		From(s.tableName).
 		Where("type = ?", productType).
 		PlaceholderFormat(sq.Dollar).
@@ -94,7 +92,6 @@ func (s *ProductStorage) SelectByType(productType string) (products []DBRow, err
 	}
 	defer rows.Close()
 
-
 	for rows.Next() {
 		product := Product{}
 		err = rows.Scan(&product.Id, &product.Name, &product.Type, &product.Description,
@@ -104,7 +101,6 @@ func (s *ProductStorage) SelectByType(productType string) (products []DBRow, err
 		}
 		products = append(products, product)
 	}
-
 
 	return products, nil
 }
@@ -136,10 +132,8 @@ func (s *ProductStorage) GetProductsByOrder(orderId int64) (products []DBRow, er
 		products = append(products, product)
 	}
 
-
 	return products, nil
 }
-
 
 func NewProductStorage(conn *sql.DB) Storage {
 	return &ProductStorage{

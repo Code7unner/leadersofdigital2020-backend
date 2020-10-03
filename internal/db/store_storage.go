@@ -19,7 +19,7 @@ type StoreStorage struct {
 func (s *StoreStorage) Insert(row DBRow) error {
 	dbRow, ok := row.(*Store)
 	if !ok {
-		return errors.New("user validation error")
+		return errors.New("store validation error")
 	}
 
 	bdTx, err := s.conn.Begin()

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	sq "github.com/Masterminds/squirrel"
-
 )
 
 const (
@@ -91,7 +90,6 @@ func (s *OrderStorage) SelectByCourier(courierId int64) (orders []DBRow, err err
 
 	return orders, nil
 }
-
 
 func NewOrderStorage(conn *sql.DB) Storage {
 	return &OrderStorage{
