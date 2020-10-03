@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	sq "github.com/Masterminds/squirrel"
 )
 
 const (
@@ -45,6 +46,28 @@ func (s *UserStorage) Insert(row DBRow) error {
 	}
 
 	return nil
+}
+func (s *UserStorage) GetUserById(id int64) (user DBRow, err error) {
+	sqlQ, _, err := sq.Select("id", "name", "phone", "password", "address", "sex", "role").
+		From(s.tableName).
+		Where("id = ?", id).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	row := User{}
+
+	err = s.conn.QueryRow(sqlQ, id).Scan(&row.Id, &row.Name, &row.Phone, &row.Password, &row.Address, &row.Sex, &row.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	user = &row
+
+
+	return user, err
 }
 
 func NewUserStorage(conn *sql.DB) Storage {

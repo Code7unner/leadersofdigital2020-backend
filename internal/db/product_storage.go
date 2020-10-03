@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	sq "github.com/Masterminds/squirrel"
 )
 
 const (
@@ -46,6 +47,99 @@ func (s *ProductStorage) Insert(row DBRow) error {
 
 	return nil
 }
+
+
+func (s *ProductStorage) GetAllProducts() (products []DBRow, err error) {
+	sqlQ, _ , err := sq.Select("id", "name", "type", "description", "price", "image_url", "additional_info").
+		From(s.tableName).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.conn.Query(sqlQ, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		product := Product{}
+		err = rows.Scan(&product.Id, &product.Name, &product.Type, &product.Description,
+			&product.Price, &product.ImgUrl, &product.AdditionalInfo)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+
+
+	return products, nil
+}
+
+func (s *ProductStorage) SelectByType(productType string) (products []DBRow, err error) {
+
+	sqlQ, _ , err := sq.Select("id", "name", "type", "description", "price", "image_url", "additional_info").
+		From(s.tableName).
+		Where("type = ?", productType).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.conn.Query(sqlQ, productType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+
+	for rows.Next() {
+		product := Product{}
+		err = rows.Scan(&product.Id, &product.Name, &product.Type, &product.Description,
+			&product.Price, &product.ImgUrl, &product.AdditionalInfo)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+
+
+	return products, nil
+}
+
+func (s *ProductStorage) GetProductsByOrder(orderId int64) (products []DBRow, err error) {
+	sqlQ, _, err := sq.Select("products.id", "products.name", "products.type", "products.description", "products.price", "products.image_url", "products.additional_info").
+		Join("order_product ON order_product.product_id = products.id", nil).
+		Where("order_product.order_id = ?", orderId).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.conn.Query(sqlQ, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		product := Product{}
+		err = rows.Scan(&product.Id, &product.Name, &product.Type, &product.Description,
+			&product.Price, &product.ImgUrl, &product.AdditionalInfo)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+
+
+	return products, nil
+}
+
 
 func NewProductStorage(conn *sql.DB) Storage {
 	return &ProductStorage{

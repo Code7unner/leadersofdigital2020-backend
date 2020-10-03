@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"errors"
+	sq "github.com/Masterminds/squirrel"
+
 )
 
 const (
@@ -38,6 +40,58 @@ func (s *OrderStorage) Insert(row DBRow) error {
 
 	return nil
 }
+
+func (s *OrderStorage) SelectById(id int64) (order DBRow, err error) {
+	sqlQ, _, err := sq.Select("id", "courier_id", "status").
+		From(s.tableName).
+		Where("id = ?", id).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	row := Order{}
+
+	err = s.conn.QueryRow(sqlQ, id).Scan(&row.Id, &row.CourierId, &row.Status)
+	if err != nil {
+		return nil, sql.ErrNoRows
+	}
+
+	order = &row
+
+	return order, nil
+}
+
+func (s *OrderStorage) SelectByCourier(courierId int64) (orders []DBRow, err error) {
+	sqlQ, _, err := sq.Select("id", "courier_id", "status").
+		From(s.tableName).
+		Where("courier_id = ?", courierId).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.conn.Query(sqlQ, courierId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		order := Order{}
+		err = rows.Scan(&order.Id, order.Status, order.CourierId)
+		if err != nil {
+			return nil, err
+		}
+
+		orders = append(orders, order)
+	}
+
+	return orders, nil
+}
+
 
 func NewOrderStorage(conn *sql.DB) Storage {
 	return &OrderStorage{
